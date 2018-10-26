@@ -113,13 +113,13 @@ ids=np.genfromtxt(
         "test.csv", delimiter=",",skip_header=1, usecols=[0])
 print('shape of ids',ids.shape)
 
-pred=np.column_stack((ids.astype(int),predictions_test.astype(int)))
+#pred=np.column_stack((ids.astype(int),predictions_test.astype(int)))
 
 
-header='%s,%s'%('Id','Predictions')
-np.savetxt("sample-submission.csv", pred, delimiter=",", fmt='%2.d', header=header)
+#header='%s,%s'%('Id','Predictions')
+#np.savetxt("sample-submission.csv", pred, delimiter=",", fmt='%2.d', header=header)
 
-
+create_csv_submission(ids, predictions_test, "sample-submission.csv")
 
 ###################################################
 #DATA TREATMENT, POSSIBLE APPROACHES
