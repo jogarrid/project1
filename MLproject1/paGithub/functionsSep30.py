@@ -4,6 +4,8 @@ import os
 import random
 import matplotlib.pyplot as plt
 import csv
+import math
+from math import log
 
 #HELPER FUNCTIONS
 def load_data_project(path_dataset,sub_sample = True):
@@ -19,10 +21,10 @@ def load_data_project(path_dataset,sub_sample = True):
 
     else:
         return data
-    # sub-sample
-    #if sub_sample:
-    #    data = data[::100]
-    #    labels = labels[::100]
+    #sub-sample
+    if sub_sample:
+        data = data[::1000]
+        labels = labels[::1000]
 
 
 def standardize_columns(data, account_for_missing = True):
@@ -271,8 +273,7 @@ def train_model (y, tx, model, w_initial = 'Doesn-t apply', max_iters  = 'Doesn-
         loss, w_final = least_squares_SGD(y, tx, w_initial, max_iters*100, gamma) #to work reasonably well, stochastic gradient
         #needs more iterations than gradient descent,as batch_size = 1
     elif(model == 2):
-        loss, w_final = least_squares(y, tx) 
-        print('heyyyyyyyyyyyyyyyyyyyyyy')
+        loss, w_final = least_squares(y, tx)
     elif(model == 3):
         loss,w_final = ridge_regression(y, tx, lambda_)
     #elif(model == 4):
@@ -297,4 +298,128 @@ def create_csv_submission(ids, y_pred, name):
             writer.writerow({'Id':int(r1),'Prediction':int(r2)})
 
 
+def sigmoid(t):
+    """compues sigmoid function"""
+    sig=np.exp(t)/(1+np.exp(t))
+    return sig
+
+def calculate_loss(y, tx, w):
+    """compute the cost by negative log likelihood."""
+    N=y.shape[0]
+    tx_T=tx.T
+    l=[]
+    for n in range(N):
+        #first_calc=math.log(abs(sigmoid(tx[n].dot(w))))
+        #x=abs(sigmoid(tx[n].dot(w)))+1
+        #sec=math.log(1-sigmoid(tx[n].dot(w)))
+        loss=-y[n]*math.log(abs(sigmoid(tx[n].dot(w)))+0.01)+(1-y[n])*math.log(abs(1-sigmoid(tx[n].dot(w)))+0.01)
+        l.append(loss)
+    return loss
+
+def calculate_gradient(y, tx, w):
+    """compute the gradient of loss."""
+    print('computing gradient')
+    print(tx.dot(w))
+    sig=sigmoid(tx.dot(w))
+    print('computing sig')
+    print('sig',sig,'################',y)
+    grad=tx.T.dot(sig-y)
+    print('returning grad')
+    return grad
+
+
+def learning_by_gradient_descent(y, tx, w, gamma):
+    """
+    Do one step of gradient descen using logistic regression.
+    Return the loss and the updated w.
+    """
+    print('gradient descent')
+    loss=calculate_loss(y, tx, w)
+    grad=calculate_gradient(y,tx,w)
+    print('recalculating w')
+    w=w-gamma*grad
+    print('returning loss and w')
+    return loss, w
+
+def logistic_regression_gradient_descent_demo(y, x,max_iter,threshold,gamma):
+    # init parameters
+    
+    losses = []
+    print('in the logistic regression')
+    # build tx
+    tx = np.c_[np.ones((y.shape[0], 1)), x]
+   
+    w = np.zeros((tx.shape[1], 1))
+    # start the logistic regression
+    for iter in range(max_iter):
+        print('iteration',iter)
+        # get loss and update w.
+        loss, w = learning_by_gradient_descent(y, tx, w, gamma)
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        # converge criterion
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    # visualization
+    #visualization(y, x, mean_x, std_x, w, "classification_by_logistic_regression_gradient_descent")
+    print("loss={l}".format(l=calculate_loss(y, tx, w)))
+
+    return loss,w
+
+def calculate_hessian(y, tx, w):
+    """return the hessian of the loss function."""
+    N=y.shape[0]
+    S_list=[]
+    for n in range(N):
+        S_value=float((sigmoid(tx[n].dot(w)))*(1-sigmoid(tx[n].dot(w))))
+        S_list.append(S_value)
+    S=np.diag(S_list)
+    hessian=(tx.T.dot(S)).dot(tx)
+    return hessian
+
+
+def penalized_logistic_regression(y, tx, w, lambda_):
+    """return the loss, gradient, and hessian."""
+    loss=calculate_loss(y,tx,w)
+    penalized_loss=loss+lambda_*np.power(np.linalg.norm(w),2)
+    grad=calculate_gradient(y,tx,w)
+    hessian=calculate_hessian(y,tx,w)
+    return penalized_loss,grad,hessian
+
+def learning_by_penalized_gradient(y, tx, w, gamma, lambda_):
+    """
+    Do one step of gradient descent, using the penalized logistic regression.
+    Return the loss and updated w.
+    """
+    penalized_loss,grad,hessian=penalized_logistic_regression(y,tx,w,lambda_)
+    w=w-gamma*grad
+    
+    return penalized_loss, w
+
+def logistic_regression_penalized_gradient_descent_demo(y, x,max_iter,gamma,lambda_,threshold):
+    # init parameters
+    
+    losses = []
+
+    # build tx
+    tx = np.c_[np.ones((y.shape[0], 1)), x]
+    w = np.zeros((tx.shape[1], 1))
+
+    # start the logistic regression
+    for iter in range(max_iter):
+        # get loss and update w.
+        loss, w = learning_by_penalized_gradient(y, tx, w, gamma, lambda_)
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        # converge criterion
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+        print('Norm of w',np.linalg.norm(w))
+    # visualization
+    #visualization(y, x, mean_x, std_x, w, "classification_by_logistic_regression_penalized_gradient_descent")
+    print("loss={l}".format(l=calculate_loss(y, tx, w)))
 

@@ -30,9 +30,22 @@ max_iters = 'Doesnt apply'
 gamma = 'Doesnt apply'
 w_initial = 'Doesnt apply'
 
+
+
 #Parameters for models 4 and 5
 import datetime
 from functionsSep30 import *
+
+#Parameters for model 6
+max_iter = 10000
+threshold = 1e-8
+gamma = 0.01
+
+#Parameters for model 7
+max_iter = 10000
+gamma = 0.01
+lambda_ = 0.1
+threshold = 1e-8
 
 
 data,labels = load_data_project(path_dataset = "train.csv")
@@ -45,6 +58,7 @@ x, mean_x, std_x, missing_values = standardize_columns(data,ACCOUNT_FOR_MISSING)
 #works equal or even better slightly better in some cases when considering absurd (-999) values!
 #why? --> INFORMATION ABOUT WHICH VALUES ARE MISSING IS IMPORTANT --> ATTEMPT APPROACH c
 y = labels_int
+y=np.expand_dims(y, axis=1)
 tx = build_model_data1(x, missing_values, INPUT_MISSING,FEATURE_EXPANSION, degree)   #If input_missing = true the program is approach C 
 #(takes as an input also a matrix that has 0 in the present values and 1 in the missing ones). Will give error if  account_for_missing
 #is false and input_missing are True. TODO --> solve this so an error is displayed by screen
@@ -53,11 +67,12 @@ w_initial = np.zeros((tx.shape[1]))
 
 # Find the weigths and the loss using 1 / 6 approaches suggested
 start_time = datetime.datetime.now()
-loss, w_final = train_model (y, tx, MODEL, w_initial, max_iters, gamma, lambda_)
+#loss, w_final = train_model (y, tx, MODEL, w_initial, max_iters, gamma, lambda_)
 #loss, w_final = least_squares_GD(y, tx, w_initial, max_iters, gamma)
 #loss, w_final = least_squares_SGD(y, tx, w_initial, max_iters*100, gamma) #to work reasonably well, stochastic gradient descent needs more iterations than GD as we have a very small (1) batch size
 #loss, w_final = least_squares(y,tx) #for now, it doesn´t work with approach C (tx has a column that is all zeros and can´t find its inverse)
-
+loss,w_final=logistic_regression_gradient_descent_demo(y, tx,max_iter,threshold,gamma)
+loss,w_final=logistic_regression_penalized_gradient_descent_demo(y, x,max_iter,gamma,lambda_,threshold)
 #lambdas=np.logspace(-5,0,15)
 #for lambda_ in lambdas:
 #    loss,w_final=ridge_regression(y,tx,lambda_)
@@ -112,12 +127,6 @@ print('shape of predictions',predictions_test.shape)
 ids=np.genfromtxt(
         "test.csv", delimiter=",",skip_header=1, usecols=[0])
 print('shape of ids',ids.shape)
-
-#pred=np.column_stack((ids.astype(int),predictions_test.astype(int)))
-
-
-#header='%s,%s'%('Id','Predictions')
-#np.savetxt("sample-submission.csv", pred, delimiter=",", fmt='%2.d', header=header)
 
 create_csv_submission(ids, predictions_test, "sample-submission.csv")
 
