@@ -46,10 +46,6 @@ def standardize_columns(data, account_for_missing = True):
         if(account_for_missing == 1):
             for i in range(data.shape[1]):
                 x[missing_values[:,i],i] = np.random.normal(0, 1, sum(missing_values[:,i]))
-                
-            #alpha=np.random.random(1)[0]
-            #x[missing_values] = mean_x[i]+alpha*std_x[i]
-            #print('alpha',alpha)
 
     else: 
         missing_values = 0 

@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import random
 import csv
 
+import datetime
+from functionsSep30 import *
+
 get_ipython().run_line_magic('load_ext', 'autoreload')
 get_ipython().run_line_magic('autoreload', '2')
 
@@ -30,18 +33,12 @@ max_iters = 'Doesnt apply'
 gamma = 'Doesnt apply'
 w_initial = 'Doesnt apply'
 
-
-
-#Parameters for models 4 and 5
-import datetime
-from functionsSep30 import *
-
-#Parameters for model 6
+#Parameters for model 4
 max_iter = 10000
 threshold = 1e-8
 gamma = 0.01
 
-#Parameters for model 7
+#Parameters for model 5
 max_iter = 10000
 gamma = 0.01
 lambda_ = 0.1
